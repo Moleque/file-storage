@@ -1,4 +1,4 @@
-from entities.resources import Type, Key
+from .entities import Type, Key
 
 from .storage import Storage
 from .ftp import FtpServer
