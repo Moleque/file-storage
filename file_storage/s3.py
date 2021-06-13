@@ -1,6 +1,6 @@
 """Пакет для работы с S3 хранилищем"""
 import boto3
-from os.path import basename, dirname, split, join
+from os.path import basename, split, join
 from os import listdir
 
 from botocore.client import Config

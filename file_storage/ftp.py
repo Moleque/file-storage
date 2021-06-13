@@ -1,6 +1,8 @@
 """Пакет для работы с ftp-сервером"""
 from ftplib import FTP, Error
 from datetime import datetime
+from os.path import basename, join
+from os import listdir
 
 from .storage import Storage, FileData, EntryType
 
@@ -71,9 +73,17 @@ class FtpServer(Storage):
         """upload загружает файл source на ftp-сервер"""
         if not self._connect():
             return False
+        filename = basename(source)
         try:
-            with open(source, "rb") as file:
-                self._ftp.storbinary("STOR " + destination, file, 1024)
+            if filename == "":
+                for filename in listdir(source):
+                    with open(join(source, filename), "rb") as file:
+                        self._ftp.storbinary("STOR " + join(destination, filename), file, 1024)
+            else:
+                if basename(destination) == "":
+                    destination = join(destination, filename)
+                with open(source, "rb") as file:
+                    self._ftp.storbinary("STOR " + destination, file, 1024)
             self._disconnect()
             return True
         except (FileNotFoundError, Error):
@@ -84,9 +94,17 @@ class FtpServer(Storage):
         """download скачивает файл source с ftp-сервера"""
         if not self._connect():
             return False
+        filename = basename(source)
         try:
-            with open(destination, "wb") as file:
-                self._ftp.retrbinary("RETR " + source, file.write, 1024)
+            if filename == "":
+                for filedata in self.files(source):
+                    with open(join(destination, filedata.name), "wb") as file:
+                        self._ftp.retrbinary("RETR " + join(source, filedata.name), file.write, 1024)
+            else:
+                if basename(destination) == "":
+                    destination = join(destination, filename)
+                with open(destination, "wb") as file:
+                    self._ftp.retrbinary("RETR " + source, file.write, 1024)
             self._disconnect()
             return True
         except (FileNotFoundError, Error):

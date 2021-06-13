@@ -1,12 +1,13 @@
 [tool.poetry]
 name = "file-storage"
-version = "0.1.0"
+version = "0.1.12"
 description = "Universal tool for file storages"
 authors = ["Moleque <molecada@yandex.ru>"]
 license = "GPL-3.0 License"
 
 [tool.poetry.dependencies]
 python = "^3.6"
+boto3 = "^1.17.66"
 
 [tool.poetry.dev-dependencies]
 
