@@ -15,12 +15,16 @@ class StorageComposite(Storage):
         """remove удаляет существующий Storage"""
         self._storages.remove(storage)
 
-    def files(self, path: str) -> [FileData]:
+    def files(self, path: str) -> ([FileData], bool):
         """files возвращает список файлов из всех Storage"""
         files = []
+        is_correct = True
         for storage in self._storages:
-            files.append(storage.files(path))
-        return files
+            new_files, ok = storage.files(path)
+            if not ok:
+                is_correct = False
+            files.append(new_files)
+        return files, is_correct
 
     def upload(self, source: str, destination: str) -> bool:
         """

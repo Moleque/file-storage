@@ -6,23 +6,36 @@ from os import listdir
 
 from .storage import Storage, FileData, EntryType
 
+DEFAULT_PORT = 21
 
 class FtpServer(Storage):
     """FtpServer класс взаимодействия с ftp-сервером"""
     def __init__(self, host: str, user: str, password: str) -> None:
         self._ftp = None
-        self._host = host
+
+        elements = host.split(":")
+        if len(elements) > 1:
+            self._host = elements[0]
+            try:
+                self._port = int(elements[1])
+            except ValueError:
+                self._port = DEFAULT_PORT
+        else:
+            self._host = host
+            self._port = DEFAULT_PORT
+
         self._user = user
         self._password = password
 
     def _connect(self) -> bool:
         """_connect подключает к ftp-серверу"""
-        self._ftp = FTP(self._host)
+        self._ftp = FTP()
         try:
-            if self._ftp.login(self._user, self._password) != "230 Login successful.":
+            self._ftp.connect(self._host, self._port)
+            if "230" not in self._ftp.login(self._user, self._password):
                 return False
             return True
-        except Error:
+        except (ConnectionRefusedError, Error):
             return False
 
     def _disconnect(self) -> None:
@@ -51,11 +64,11 @@ class FtpServer(Storage):
             ),
         }
 
-    def files(self, path: str) -> []:
+    def files(self, path: str) -> ([FileData], bool):
         """files получает информацию о файлах в директории path на ftp-сервера"""
         files = []
         if not self._connect():
-            return files
+            return files, False
         try:
             notes = []
             self._ftp.cwd(path)
@@ -64,10 +77,10 @@ class FtpServer(Storage):
                 data = self._decode_file_data(note)
                 files.append(FileData(data["name"], data["size"], data["type"], data["time"]))
             self._disconnect()
-            return files
-        except (FileNotFoundError, Error):
+            return files, True
+        except (FileNotFoundError, ConnectionRefusedError, Error):
             self._disconnect()
-            return files
+            return files, False
 
     def upload(self, source: str, destination: str) -> bool:
         """upload загружает файл source на ftp-сервер"""

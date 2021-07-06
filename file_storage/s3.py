@@ -1,6 +1,6 @@
 """Пакет для работы с S3 хранилищем"""
 import boto3
-from os.path import basename, split, join
+from os.path import basename, join
 from os import listdir
 
 from botocore.client import Config
@@ -21,12 +21,19 @@ class S3(Storage):
             config=Config(signature_version="s3v4"),
         )
 
-    def files(self, path: str) -> [FileData]:
+    def files(self, path: str) -> ([FileData], bool):
         """files получает информацию о файлах в директории path в S3 хранилище"""
         files = []
-        for file in self._s3.Bucket(path).objects.all():
-            files.append(FileData(name=file.key, etype=EntryType.FILE))
-        return files
+        try:
+            for file in self._s3.Bucket(path).objects.all():
+                files.append(FileData(name=file.key, etype=EntryType.FILE))
+            return files, True
+        except (
+            FileNotFoundError,
+            boto3.exceptions.botocore.exceptions.ClientError,
+            boto3.exceptions.botocore.exceptions.ParamValidationError,
+        ):
+            return files, False
 
     def upload(self, source: str, destination: str) -> bool:
         """upload загружает файл source в S3 хранилище"""

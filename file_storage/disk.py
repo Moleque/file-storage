@@ -20,11 +20,11 @@ class Disk(Storage):
             logging.info(shutil.copy2(source, destination))
         return True
 
-    def files(self, path: str) -> []:
+    def files(self, path: str) -> ([FileData], bool):
         """files получает информацию о файлах в директории path"""
         files = []
         if not isdir(path):
-            return files 
+            return files, False
         try:
             for filename in listdir(path):
                 file_path = join(path, filename)
@@ -35,9 +35,9 @@ class Disk(Storage):
                 else:
                     file_type = EntryType.FILE
                 files.append(FileData(filename, getsize(file_path), file_type, getmtime(file_path)))
-            return files
+            return files, True
         except (FileNotFoundError, Error):
-            return files
+            return files, False
 
     def upload(self, source: str, destination: str) -> bool:
         """upload копирует source в destination"""

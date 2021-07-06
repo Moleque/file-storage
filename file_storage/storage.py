@@ -33,7 +33,7 @@ class FileData:
 class Storage(ABC):
     """Storage базовый класс для работы с хранилищами"""
     @abstractmethod
-    def files(self, path: str) -> bool:
+    def files(self, path: str) -> ([FileData], bool):
         """upload загружает файл source в Storage"""
 
     @abstractmethod
