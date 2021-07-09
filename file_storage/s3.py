@@ -1,4 +1,5 @@
 """Пакет для работы с S3 хранилищем"""
+from genericpath import isdir
 import boto3
 from os.path import basename, join
 from os import listdir
@@ -38,10 +39,15 @@ class S3(Storage):
     def upload(self, source: str, destination: str) -> bool:
         """upload загружает файл source в S3 хранилище"""
         filename = basename(source)
+        
+        elements = destination.split("/", 1)
+        bucket_name, path = elements[0], ""
+        if len(elements) == 2:
+            path = elements[1]
+        
         try:
-            bucket_name, path = destination.split("/", 1)
             bucket = self._s3.Bucket(bucket_name)
-            if filename == "":
+            if isdir(source):
                 for filename in listdir(source):
                     bucket.upload_file(join(source, filename), join(path, filename))
             else:
@@ -55,10 +61,15 @@ class S3(Storage):
     def download(self, source: str, destination: str) -> bool:
         """download скачивает файл source из S3 хранилища"""
         filename = basename(source)
+
+        elements = source.split("/", 1)
+        bucket_name, path = elements[0], ""
+        if len(elements) == 2:
+            path = elements[1]
+
         try:
-            bucket_name, path = source.split("/", 1)
             bucket = self._s3.Bucket(bucket_name)
-            if filename == "":
+            if "." not in filename:
                 for s3_object in bucket.objects.filter(Prefix=path):
                     bucket.download_file(s3_object.key, join(destination, basename(s3_object.key)))
             else:
