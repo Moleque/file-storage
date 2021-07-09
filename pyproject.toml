@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "file-storage"
-version = "0.2.0"
+version = "0.2.2"
 description = "Universal tool for file storages"
 authors = ["Moleque <molecada@yandex.ru>"]
 license = "GPL-3.0 License"

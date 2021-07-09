@@ -45,9 +45,9 @@ class S3(Storage):
                 for filename in listdir(source):
                     bucket.upload_file(join(source, filename), join(path, filename))
             else:
-                if basename(destination) == "":
-                    destination = join(destination, filename)
-                bucket.upload_file(path, destination)
+                if basename(path) == "":
+                    path = join(path, filename)
+                bucket.upload_file(source, path)
             return True
         except (FileNotFoundError, boto3.exceptions.botocore.exceptions.ClientError):
             return False
