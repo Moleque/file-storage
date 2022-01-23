@@ -51,18 +51,22 @@ class FtpServer(Storage):
     def _decode_file_data(data: str) -> dict:
         """_decode_file_data декодирует данные о файлах на ftp-сервере"""
         fields = data.split()
-        return {
-            "type": EntryType.FOLDER if fields[0] == "d" else EntryType.FILE,
-            "size": int(fields[4]),
-            "name": fields[-1],
-            "time": datetime(   # время изменения
+        name = fields[-1]
+        try:
+            type = EntryType.FOLDER if fields[0] == "d" else EntryType.FILE
+            size = int(fields[4])
+            time = datetime(   # время изменения
                 year=datetime.now().year,
                 month=datetime.strptime(fields[5], "%b").month,
                 day=int(fields[6]),
                 hour=int(fields[7].split(":")[0]),
                 minute=int(fields[7].split(":")[-1]),
-            ),
-        }
+            )
+        except:
+            type = EntryType.FILE
+            size = 0
+            time = datetime.min
+        return {"type": type, "size": size, "name": name, "time": time}
 
     def files(self, path: str) -> ([FileData], bool):
         """files получает информацию о файлах в директории path на ftp-сервера"""
