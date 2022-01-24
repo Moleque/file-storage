@@ -1,5 +1,5 @@
 """Пакет для работы с ftp-сервером"""
-from ftplib import FTP, Error
+from ftplib import FTP, Error, error_perm
 from datetime import datetime
 from os.path import basename, join
 from os import listdir
@@ -48,7 +48,7 @@ class FtpServer(Storage):
         self._ftp = None
 
     @staticmethod
-    def _decode_file_data(data: str) -> dict:
+    def decode_file_data(data: str) -> dict:   # METHOD DEPRICATED !
         """_decode_file_data декодирует данные о файлах на ftp-сервере"""
         fields = data.split()
         name = fields[-1]
@@ -68,21 +68,33 @@ class FtpServer(Storage):
             time = datetime.min
         return {"type": type, "size": size, "name": name, "time": time}
 
+    @staticmethod
+    def get_file_data(name: str, info: dict) -> FileData:
+        try:
+            type = EntryType.FOLDER if info["type"] == "cdir" else EntryType.FILE
+            if type == EntryType.FILE:
+                size = int(info["size"])
+            elif type == EntryType.FOLDER:
+                size = int(info["sizd"])
+            time = datetime.strptime(info["modify"], "%Y%m%d%H%M%S")
+            return FileData(name, size, type, time)
+        except:
+            return FileData(name, 0, EntryType.FILE, datetime.min)
+
     def files(self, path: str) -> ([FileData], bool):
         """files получает информацию о файлах в директории path на ftp-сервера"""
         files = []
         if not self._connect():
             return files, False
         try:
-            notes = []
             self._ftp.cwd(path)
-            self._ftp.retrlines("LIST", notes.append)
-            for note in notes:
-                data = self._decode_file_data(note)
-                files.append(FileData(data["name"], data["size"], data["type"], data["time"]))
+            for name, info in self._ftp.mlsd():
+                if name in [".", ".."]:
+                    continue
+                files.append(self.get_file_data(name, info))
             self._disconnect()
             return files, True
-        except (FileNotFoundError, ConnectionRefusedError, Error):
+        except (error_perm, FileNotFoundError, ConnectionRefusedError, Error):
             self._disconnect()
             return files, False
 
